@@ -24,17 +24,23 @@
 import requests
 from logging import getLogger
 from typing import Dict
+from config import Configuration
 
 logger = getLogger(__name__)
 
 
 class OpenObserve:
-    def __init__(self, base_url: str, token: str, index: str) -> None:
-        self._base_url = base_url
-        self._token = token
-        self._index = index
+    def __init__(self, configuration: Configuration) -> None:
+        logger.info("__init__")
+        self._token = configuration.get("openobserve_token", "")
+        self._base_url = configuration.get("openobserve_base_url", "")
+        self._index = configuration.get("openobserve_index", "")
 
     def post(self, message: Dict):
+        logger.info("__post__")
+        if self._token == "" or self._base_url == "" or self._index == "":
+            return
+        logger.debug(f"message: {message}")
         url = f"https://{self._base_url}/api/default/{self._index}/_json"
         headers = {"Authorization": f"Basic {self._token}",
                    "Content-Type": "application/json",
@@ -42,6 +48,7 @@ class OpenObserve:
         try:
             data = [message]
             response = requests.post(url, headers=headers, json=data)
+            logger.debug(f"response: {response.status_code}. {response.text}")
             if response.status_code != 200:
                 msg = f"HTTP Error {response.status_code}. {response.text}"
                 raise Exception(msg)

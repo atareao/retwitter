@@ -23,12 +23,24 @@
 
 import logging
 import os
-from openobserve import OpenObserve
-from retwitter.config import Configuration
+import sys
 from time import sleep
+from retry import retry
+from config import Configuration
+from openobserve import OpenObserve
 from twitter import Twitter
 
+FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+logging.basicConfig(stream=sys.stdout,
+                    format=FORMAT,
+                    level=logging.getLevelName(LOG_LEVEL))
 logger = logging.getLogger(__name__)
+
+
+@retry(tries=6, delay=600)
+def start_twitter(configuration: Configuration) -> Twitter:
+    return Twitter(configuration)
 
 
 def main():
@@ -37,34 +49,31 @@ def main():
     configuration = Configuration(config_file)
     configuration.read()
 
-    sleep_time = configuration.config["sleep_time"]
-    user_id = configuration.config["user_id"]
-    last_id = configuration.config["last_id"]
+    sleep_time = int(configuration.get("sleep_time", 600))
 
-    openobserve_token = configuration.config["openobserve_token"]
-    openobserve_base_url = configuration.config["openobserve_base_url"]
-    openobserve_index = configuration.config["openobserve_index"]
-    openobserve = OpenObserve(openobserve_base_url, openobserve_token,
-                              openobserve_index)
-
-    consumer_key = configuration.config["consumer_key"]
-    consumer_secret = configuration.config["consumer_secret"]
-    access_token = configuration.config["access_token"]
-    access_secret = configuration.config["access_secret"]
-    twitter = Twitter(consumer_key, consumer_secret, access_token,
-                      access_secret)
+    openobserve = OpenObserve(configuration)
+    twitter = start_twitter(configuration)
 
     while True:
         try:
-            last_id = twitter.get_last_tweet(user_id, last_id)
-            response = twitter.retweet(last_id)
-            configuration.config["last_id"] = last_id
-            configuration.save()
-            message = {
-                "tweet_id": last_id,
-                "response": response
-            }
-            openobserve.post(message)
+            tweet = twitter.retweet_last()
+            if tweet:
+                message = {
+                    "tweet_id": tweet.id,
+                    "response": {
+                        "id": tweet.id,
+                        "created_at": tweet.created_at,
+                        "user": tweet.user.name,
+                        "text": tweet.text,
+                        "lang": tweet.lang,
+                        "quote_count": tweet.quote_count,
+                        "reply_count": tweet.reply_count,
+                        "favorite_count": tweet.favorite_count,
+                        "view_count": tweet.view_count,
+                        "retweet_count": tweet.retweet_count
+                    }
+                }
+                openobserve.post(message)
         except Exception as exception:
             logger.error(exception)
         sleep(sleep_time)

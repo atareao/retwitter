@@ -43,9 +43,11 @@ test:
     docker run --rm \
                --init \
                --name {{name}} \
+               -e CONFIG_FILE="/app/config.json" \
+               -e COOKIES_FILE="/app/cookies.json" \
                --detach \
-               -p 8000:8000 \
-               --volume $PWD/config.toml:/app/config.toml:ro \
+               --volume $PWD/config.json:/app/config.json:ro \
+               --volume $PWD/cookies.json:/app/cookies.json:ro \
                --volume /etc/timezone:/etc/timezone:ro \
                --volume /etc/localtime:/etc/localtime:ro \
                {{user}}/{{name}}:latest

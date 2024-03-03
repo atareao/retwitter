@@ -29,22 +29,21 @@ logger = logging.getLogger(__name__)
 
 class Configuration:
     def __init__(self, config_file):
+        logger.info("__init__")
         self._config_file = config_file
 
     def read(self):
-        logger.info("_read_config")
+        logger.info("read")
         with open(self._config_file, "r") as fr:
             self._config = json.load(fr)
 
     def save(self):
-        logger.info("_save_config")
+        logger.info("save")
         with open(self._config_file, "w") as fw:
-            json.dump(self._config, fw)
+            json.dump(self._config, fw, sort_keys=True, indent=4)
 
-    @property
-    def config(self):
-        return self._config
+    def get(self, key, default=None):
+        return self._config[key] if key in self._config else default
 
-    @config.setter
-    def config(self, config):
-        self._config = config
+    def set(self, key, value):
+        self._config[key] = value

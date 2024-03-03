@@ -21,13 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-WORKERS=4
-LOG_LEVEL=debug
-HOST=0.0.0.0
-PORT=8000
-#    --worker-class $WORKER_CLASS \
-
-sanic expertos.main:app \
-    --host=$HOST \
-    --port=$PORT \
-    --workers=$WORKERS
+source /app/.venv/bin/activate
+cd /app
+python retwitter/main.py

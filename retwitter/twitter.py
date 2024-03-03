@@ -21,51 +21,54 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
-import requests
-from requests_oauthlib import OAuth1
 
+import logging
+from twikit import Client
+from config import Configuration
 
 logger = logging.getLogger(__name__)
 
 
 class Twitter:
-    def __init__(self, consumer_key: str, consumer_secret: str,
-                 access_token: str, access_secret: str):
+    def __init__(self, configuration: Configuration):
         logger.info("__init__")
-        self._oauth = OAuth1(consumer_key, client_secret=consumer_secret,
-                             resource_owner_key=access_token,
-                             resource_owner_secret=access_secret)
+        self._configuration = configuration
+        self._is_auth = False
+        self._client = Client("es-ES")
+        self._client.login(
+            auth_info_1=configuration.get("username"),
+            auth_info_2=configuration.get("mail"),
+            password=configuration.get("password")
+        )
+        self._is_auth = True
+        user_id = self._configuration.get("user_id")
+        self._user = self._client.get_user_by_id(user_id)
 
-    def retweet(self, tweet_id):
-        logger.info("retweet")
-        url = f"https://api.twitter.com/1.1/statuses/retweet/{tweet_id}.json"
-        logger.info(f"Url to retweet {url}")
-        response = requests.post(url=url, auth=self._oauth)
-        if response.status_code == 200:
-            logger.info(f"Retweeted: {tweet_id}")
-            return response.json()
-        msg = (f"Can not retweet: {tweet_id}. "
-               f"HTTP Error: {response.status_code}. {response.text}")
-        raise Exception(msg)
+    def retweet_last(self):
+        logger.info("retweet_last")
+        last_id = int(self._configuration.get("last_id", 0))
+        tweets = list(self._user.get_tweets("Tweets", 10))
+        tweets.sort(key=lambda x: x.id)
+        last_tweets = list(filter(
+            lambda x: int(x.id) > last_id and not x.text.startswith("RT "),
+            tweets))
+        if last_tweets:
+            last_tweet = last_tweets[0]
+            last_tweet.retweet()
+            self._configuration.set("last_id", int(last_tweet.id))
+            self._configuration.save()
+            return last_tweet
+        return None
 
-    def get_last_tweet(self, user_id, last_id) -> int:
-        logger.info("get_last_tweet")
-        if last_id:
-            url = ("https://api.twitter.com/1.1/statuses/user_timeline.json?"
-                   f"user_id={user_id}&since_id={last_id}")
-        else:
-            url = ("https://api.twitter.com/1.1/statuses/user_timeline.json?"
-                   f"user_id={user_id}")
+    def __del__(self):
+        logger.info("__del__")
+        if self._is_auth:
+            response = self._client.logout()
+            logger.debug(response)
 
-        response = requests.get(url=url)
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                return data[0]['id']
-            else:
-                msg = "Can not get last tweet"
-                raise Exception(msg)
-        else:
-            msg = f"HTTP Error: {response.status_code}. {response.text}"
-            raise Exception(msg)
+
+if __name__ == "__main__":
+    configuration = Configuration("config.json")
+    configuration.read()
+    t = Twitter(configuration)
+    t.retweet_last()
