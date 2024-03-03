@@ -30,8 +30,7 @@ build-test:
                  .
 test:
     #!/bin/bash
-    docker ps | grep {{name}}
-    if [[ $? -eq 0 ]]; then
+    if docker ps | grep {{name}}; then
         docker stop {{name}}
         docker wait {{name}}
         while docker ps | grep {{name}};do
