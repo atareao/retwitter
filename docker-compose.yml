@@ -10,8 +10,3 @@ services:
       - CONFIG_FILE=/app/config.json
     volumes:
       - ./config.json:/app/config.json
-    networks:
-      - internal
-
-networks:
-  internal: {}
