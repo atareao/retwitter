@@ -24,7 +24,7 @@
 import logging
 import os
 import sys
-from time import sleep
+from time import sleep, time
 from retry import retry
 from config import Configuration
 from openobserve import OpenObserve
@@ -73,7 +73,23 @@ def main():
                         "retweet_count": tweet.retweet_count
                     }
                 }
-                openobserve.post(message)
+            else:
+                message = {
+                    "tweet_id": "",
+                    "response": {
+                        "id": "",
+                        "created_at": time(),
+                        "user": "",
+                        "text": "No hay nuevos",
+                        "lang": "es",
+                        "quote_count": 0,
+                        "reply_count": 0,
+                        "favorite_count": 0,
+                        "view_count": 0,
+                        "retweet_count": 0
+                    }
+                }
+            openobserve.post(message)
         except Exception as exception:
             logger.error(exception)
         sleep(sleep_time)
