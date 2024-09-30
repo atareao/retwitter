@@ -92,7 +92,7 @@ async def main():
                         "retweet_count": 0
                     }
                 }
-            openobserve.post(message)
+            await openobserve.post(message)
         except Exception as exception:
             logger.error(exception)
         await asyncio.sleep(sleep_time)

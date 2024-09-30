@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import requests
+import aiohttp
 from logging import getLogger
 from typing import Dict
 from config import Configuration
@@ -36,7 +36,7 @@ class OpenObserve:
         self._base_url = configuration.get("openobserve_base_url", "")
         self._index = configuration.get("openobserve_index", "")
 
-    def post(self, message: Dict):
+    async def post(self, message: Dict):
         logger.info("__post__")
         if self._token == "" or self._base_url == "" or self._index == "":
             return
@@ -47,10 +47,13 @@ class OpenObserve:
                    "Accept": "application/json"}
         try:
             data = [message]
-            response = requests.post(url, headers=headers, json=data)
-            logger.debug(f"response: {response.status_code}. {response.text}")
-            if response.status_code != 200:
-                msg = f"HTTP Error {response.status_code}. {response.text}"
-                raise Exception(msg)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers,
+                                        json=data) as response:
+                    logger.debug(f"response: {response.status}. "
+                                 f"{response.text}")
+                    if response.status != 200:
+                        msg = f"HTTP Error {response.status}. {response.text}"
+                        raise Exception(msg)
         except Exception as exception:
             logger.error(exception)
