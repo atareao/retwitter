@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import logging
 import os
 import sys
@@ -39,11 +40,13 @@ logger = logging.getLogger(__name__)
 
 
 @retry(tries=6, delay=600)
-def start_twitter(configuration: Configuration) -> Twitter:
-    return Twitter(configuration)
+async def start_twitter(configuration: Configuration) -> Twitter:
+    twitter = Twitter(configuration)
+    await twitter.init()
+    return twitter
 
 
-def main():
+async def main():
     logger.info("main")
     config_file = os.getenv("CONFIG_FILE")
     configuration = Configuration(config_file)
@@ -52,11 +55,11 @@ def main():
     sleep_time = int(configuration.get("sleep_time", 600))
 
     openobserve = OpenObserve(configuration)
-    twitter = start_twitter(configuration)
+    twitter = await start_twitter(configuration)
 
     while True:
         try:
-            tweet = twitter.retweet_last()
+            tweet = await twitter.retweet_last()
             if tweet:
                 message = {
                     "tweet_id": tweet.id,
@@ -92,8 +95,13 @@ def main():
             openobserve.post(message)
         except Exception as exception:
             logger.error(exception)
-        sleep(sleep_time)
+        await asyncio.sleep(sleep_time)
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    tasks = [
+        loop.create_task(main())
+    ]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()

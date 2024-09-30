@@ -35,26 +35,28 @@ class Twitter:
         self._configuration = configuration
         self._is_auth = False
         self._client = Client("es-ES")
-        self._client.login(
-            auth_info_1=configuration.get("username"),
-            auth_info_2=configuration.get("mail"),
-            password=configuration.get("password")
+
+    async def init(self):
+        await self._client.login(
+            auth_info_1=self._configuration.get("username"),
+            auth_info_2=self._configuration.get("mail"),
+            password=self._configuration.get("password")
         )
         self._is_auth = True
         user_id = self._configuration.get("user_id")
-        self._user = self._client.get_user_by_id(user_id)
+        self._user = await self._client.get_user_by_id(user_id)
 
-    def retweet_last(self):
+    async def retweet_last(self):
         logger.info("retweet_last")
         last_id = int(self._configuration.get("last_id", 0))
-        tweets = list(self._user.get_tweets("Tweets", 10))
+        tweets = list(await self._user.get_tweets("Tweets", 10))
         tweets.sort(key=lambda x: x.id)
         last_tweets = list(filter(
             lambda x: int(x.id) > last_id and not x.text.startswith("RT "),
             tweets))
         if last_tweets:
             last_tweet = last_tweets[0]
-            last_tweet.retweet()
+            await last_tweet.retweet()
             self._configuration.set("last_id", int(last_tweet.id))
             self._configuration.save()
             return last_tweet
@@ -68,7 +70,14 @@ class Twitter:
 
 
 if __name__ == "__main__":
+    import asyncio
+
+    loop = asyncio.get_event_loop()
     configuration = Configuration("config.json")
     configuration.read()
     t = Twitter(configuration)
-    t.retweet_last()
+    tasks = [
+        loop.create_task(t.retweet_last())
+    ]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
