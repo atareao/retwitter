@@ -25,10 +25,11 @@ import asyncio
 import logging
 import os
 import sys
-from time import sleep, time
-from retry import retry
+from time import time
+
 from config import Configuration
 from openobserve import OpenObserve
+from retry import retry
 from twitter import Twitter
 
 FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
@@ -41,12 +42,24 @@ logger = logging.getLogger(__name__)
 
 @retry(tries=6, delay=600)
 async def start_twitter(configuration: Configuration) -> Twitter:
+    """Initialize and return a Twitter instance.
+
+    Args:
+        configuration (Configuration): The configuration object.
+
+    Returns:
+        Twitter: An initialized Twitter instance.
+    """
     twitter = Twitter(configuration)
     await twitter.init()
     return twitter
 
 
 async def main():
+    """Main function to initialize configuration.
+
+    Start the Twitter retweet process.
+    """
     logger.info("main")
     config_file = os.getenv("CONFIG_FILE")
     configuration = Configuration(config_file)

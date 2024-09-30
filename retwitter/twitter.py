@@ -23,20 +23,37 @@
 
 
 import logging
-from twikit import Client
+
 from config import Configuration
+from twikit import Client
 
 logger = logging.getLogger(__name__)
 
 
 class Twitter:
+    """A class to interact with Twitter using the provided configuration.
+
+    This class handles authentication, fetching user tweets, and retweeting
+    the latest tweets.
+    """
     def __init__(self, configuration: Configuration):
+        """Initialize the Twitter client with the given configuration.
+
+        :param configuration: Configuration object containing user credentials
+        and settings.
+        """
         logger.info("__init__")
         self._configuration = configuration
         self._is_auth = False
         self._client = Client("es-ES")
+        self._user = None
 
     async def init(self):
+        """Asynchronously initialize the Twitter client.
+
+        This method logs in the client using the credentials provided in the
+        configuration and retrieves the user information based on the user ID.
+        """
         await self._client.login(
             auth_info_1=self._configuration.get("username"),
             auth_info_2=self._configuration.get("mail"),
@@ -47,6 +64,12 @@ class Twitter:
         self._user = await self._client.get_user_by_id(user_id)
 
     async def retweet_last(self):
+        """Asynchronously retweet the latest tweet that is not a retweet.
+
+        This method fetches the latest tweets, filters out retweets, and
+        retweets the most recent tweet.  It also updates the configuration with
+        the ID of the last retweeted tweet.
+        """
         logger.info("retweet_last")
         last_id = int(self._configuration.get("last_id", 0))
         tweets = list(await self._user.get_tweets("Tweets", 10))
@@ -63,6 +86,11 @@ class Twitter:
         return None
 
     def __del__(self):
+        """Destructor method to log out the client if authenticated.
+
+        This method ensures that the client logs out when the Twitter object is
+        destroyed, provided that the client was authenticated.
+        """
         logger.info("__del__")
         if self._is_auth:
             response = self._client.logout()
@@ -73,9 +101,9 @@ if __name__ == "__main__":
     import asyncio
 
     loop = asyncio.get_event_loop()
-    configuration = Configuration("config.json")
-    configuration.read()
-    t = Twitter(configuration)
+    one_configuration = Configuration("config.json")
+    one_configuration.read()
+    t = Twitter(one_configuration)
     tasks = [
         loop.create_task(t.retweet_last())
     ]

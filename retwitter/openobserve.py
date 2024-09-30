@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""Class to interact with the OpenObserve API.
+This module provides the OpenObserve class for interacting with the OpenObserve
+API.
+"""
+
 # Copyright (c) 2024 Lorenzo Carbonell <a.k.a. atareao>
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,26 +26,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import aiohttp
 from logging import getLogger
 from typing import Dict
+
+import aiohttp
 from config import Configuration
 
 logger = getLogger(__name__)
 
 
 class OpenObserve:
+    """OpenObserve class handles the interaction with the OpenObserve API."""
+
     def __init__(self, configuration: Configuration) -> None:
+        """Initialize the OpenObserve instance with the given configuration.
+
+        :param configuration: Configuration object containing OpenObserve
+               settings.
+        """
         logger.info("__init__")
         self._token = configuration.get("openobserve_token", "")
         self._base_url = configuration.get("openobserve_base_url", "")
         self._index = configuration.get("openobserve_index", "")
 
     async def post(self, message: Dict):
+        """Post a message to the OpenObserve API.
+
+        :param message: Dictionary containing the message to be posted.
+        """
         logger.info("__post__")
         if self._token == "" or self._base_url == "" or self._index == "":
             return
-        logger.debug(f"message: {message}")
+        logger.debug("message: %s", message)
         url = f"https://{self._base_url}/api/default/{self._index}/_json"
         headers = {"Authorization": f"Basic {self._token}",
                    "Content-Type": "application/json",
@@ -51,7 +68,7 @@ class OpenObserve:
                 async with session.post(url, headers=headers,
                                         json=data) as response:
                     content = await response.text()
-                    logger.debug(f"response: {response.status}. {content}")
+                    logger.debug("response: %s. %s", response.status, content)
                     if response.status != 200:
                         msg = f"HTTP Error {response.status}. {content}"
                         raise Exception(msg)
