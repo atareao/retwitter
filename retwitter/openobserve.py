@@ -50,10 +50,10 @@ class OpenObserve:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers,
                                         json=data) as response:
-                    logger.debug(f"response: {response.status}. "
-                                 f"{response.text}")
+                    content = await response.text()
+                    logger.debug(f"response: {response.status}. {content}")
                     if response.status != 200:
-                        msg = f"HTTP Error {response.status}. {response.text}"
+                        msg = f"HTTP Error {response.status}. {content}"
                         raise Exception(msg)
         except Exception as exception:
             logger.error(exception)
