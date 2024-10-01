@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@v4
+      - name: Install the latest version of rye
+        id: install_rye
+        uses: eifinger/setup-rye@v4
       - name: Get current version
         id: get_current_version
         run: |
