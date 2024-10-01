@@ -1,12 +1,10 @@
-version: '3.7'
-
 services:
-    image: atareao/retwitter:v0.1.0
-    container_name: retwitter
-    restart: unless-stopped
-    init: true
-    environment:
-      - TZ=Europe/Madrid
-      - CONFIG_FILE=/app/config.json
-    volumes:
-      - ./config.json:/app/config.json
+  image: atareao/retwitter:v0.1.0
+  container_name: retwitter
+  restart: unless-stopped
+  init: true
+  environment:
+    - TZ=Europe/Madrid
+    - CONFIG_FILE=/app/config.json
+  volumes:
+    - ./config.json:/app/config.json
