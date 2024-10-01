@@ -35,4 +35,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: "${REPO}:v${{ steps.get_current_version.outputs.current_version }},${REPO}:latest"
+          tags: "${{ env.REPO }}:v${{ steps.get_current_version.outputs.current_version }},${{ env.REPO }}:latest"
