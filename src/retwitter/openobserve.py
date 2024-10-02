@@ -30,7 +30,8 @@ from logging import getLogger
 from typing import Dict
 
 import aiohttp
-from config import Configuration
+
+from retwitter.config import Configuration
 
 logger = getLogger(__name__)
 

@@ -24,8 +24,9 @@
 
 import logging
 
-from config import Configuration
 from twikit import Client
+
+from retwitter.config import Configuration
 
 logger = logging.getLogger(__name__)
 
