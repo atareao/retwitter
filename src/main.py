@@ -84,10 +84,12 @@ async def main():
     configuration.read()
 
     sleep_time = str2int(configuration.get("sleep_time", 600))
+    logger.info(f"Sleep time: {sleep_time}")
 
     openobserve = OpenObserve(configuration)
     twitter = await start_twitter(configuration)
 
+    logger.info("Starting main loop")
     while True:
         try:
             tweet = await twitter.retweet_last()
@@ -126,7 +128,9 @@ async def main():
             await openobserve.post(message)
         except Exception as exception:
             logger.error(exception)
+        logger.info(f"Sleeping for {sleep_time} seconds")
         await asyncio.sleep(sleep_time)
+        logger.info("Waking up")
 
 
 if __name__ == "__main__":
