@@ -29,9 +29,9 @@ from time import time
 
 from retry import retry
 
-from .config import Configuration
-from .openobserve import OpenObserve
-from .twitter import Twitter
+from retwitter.config import Configuration
+from retwitter.openobserve import OpenObserve
+from retwitter.twitter import Twitter
 
 FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
