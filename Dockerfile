@@ -44,7 +44,7 @@ RUN echo "**** install Python ****" && \
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY run.sh /app/
-COPY ./retwitter /app/retwitter
+COPY ./src /app/retwitter
 
 RUN adduser \
     --disabled-password \
