@@ -27,17 +27,35 @@ import os
 import sys
 from time import time
 
-from config import Configuration
-from openobserve import OpenObserve
 from retry import retry
-from twitter import Twitter
+
+from .config import Configuration
+from .openobserve import OpenObserve
+from .twitter import Twitter
 
 FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(stream=sys.stdout,
                     format=FORMAT,
-                    level=logging.getLevelName(LOG_LEVEL))
+                    level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
+
+
+def str2int(value) -> int:
+    """Convert a string to an integer.
+
+    Args:
+        value (str): The string to convert.
+
+    Returns:
+        int: The integer value.
+    """
+    try:
+        if value and isinstance(value, str):
+            return int(float(value))
+    except ValueError:
+        logger.error(f"Error converting {value} to int")
+    return 0
 
 
 @retry(tries=6, delay=600)
@@ -65,7 +83,7 @@ async def main():
     configuration = Configuration(config_file)
     configuration.read()
 
-    sleep_time = int(configuration.get("sleep_time", 600))
+    sleep_time = str2int(configuration.get("sleep_time", 600))
 
     openobserve = OpenObserve(configuration)
     twitter = await start_twitter(configuration)
@@ -86,8 +104,8 @@ async def main():
                         "reply_count": tweet.reply_count,
                         "favorite_count": tweet.favorite_count,
                         "view_count": tweet.view_count,
-                        "retweet_count": tweet.retweet_count
-                    }
+                        "retweet_count": tweet.retweet_count,
+                    },
                 }
             else:
                 message = {
@@ -102,8 +120,8 @@ async def main():
                         "reply_count": 0,
                         "favorite_count": 0,
                         "view_count": 0,
-                        "retweet_count": 0
-                    }
+                        "retweet_count": 0,
+                    },
                 }
             await openobserve.post(message)
         except Exception as exception:
@@ -113,8 +131,6 @@ async def main():
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    tasks = [
-        loop.create_task(main())
-    ]
+    tasks = [loop.create_task(main())]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
