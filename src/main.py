@@ -35,27 +35,8 @@ from retwitter.twitter import Twitter
 
 FORMAT = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
-logging.basicConfig(stream=sys.stdout,
-                    format=FORMAT,
-                    level=LOG_LEVEL)
+logging.basicConfig(stream=sys.stdout, format=FORMAT, level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
-
-
-def str2int(value) -> int:
-    """Convert a string to an integer.
-
-    Args:
-        value (str): The string to convert.
-
-    Returns:
-        int: The integer value.
-    """
-    try:
-        if value and isinstance(value, str):
-            return int(float(value))
-    except ValueError:
-        logger.error(f"Error converting {value} to int")
-    return 0
 
 
 @retry(tries=6, delay=600)
@@ -83,7 +64,7 @@ async def main():
     configuration = Configuration(config_file)
     configuration.read()
 
-    sleep_time = str2int(configuration.get("sleep_time", 600))
+    sleep_time = int(configuration.get("sleep_time", 600))
     logger.info(f"Sleep time: {sleep_time}")
 
     openobserve = OpenObserve(configuration)
